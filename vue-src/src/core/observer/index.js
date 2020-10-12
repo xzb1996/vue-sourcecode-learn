@@ -34,6 +34,7 @@ export function toggleObserving (value: boolean) {
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
  */
+// Observer为数据加上响应式属性进行双向绑定。如果是对象则进行深度遍历，为每个子对象都绑定上方法，如果是数组则为每一个成员都绑定上方法。
 export class Observer {
   value: any;
   dep: Dep;
@@ -43,15 +44,21 @@ export class Observer {
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
+    // 将Observer实例绑定到value数据的__ob__属性上
     def(value, '__ob__', this)
     if (Array.isArray(value)) {
+      // 如果是数组，将修改后可以接货相应的数组方法替换掉该数组的原型中的原生方法，达到监听数组数据变化相应的效果。
       if (hasProto) {
+        // 如果当前浏览器支持__proto__属性，则直接覆盖当前数组对象原型上单原生数组方法
         protoAugment(value, arrayMethods)
       } else {
+        // 如果不支持，则直接覆盖数组对象的原型
         copyAugment(value, arrayMethods, arrayKeys)
       }
+      // 如果是数组，则需要遍历数组中的每一个成员对其调用observe方法
       this.observeArray(value)
     } else {
+      // 如果是对象，则直接调用walk方法进行双向绑定
       this.walk(value)
     }
   }
@@ -62,8 +69,11 @@ export class Observer {
    * value type is Object.
    */
   walk (obj: Object) {
+    // Object.keys() 方法会返回一个由一个给定对象的自身可枚举属性组成的数组，
+    // 数组中属性名的排列顺序和正常循环遍历该对象时返回的顺序一致 。
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
+      // 遍历对象的每一个属性，调用defineReactive方法进行数据绑定
       defineReactive(obj, keys[i])
     }
   }
@@ -73,6 +83,7 @@ export class Observer {
    */
   observeArray (items: Array<any>) {
     for (let i = 0, l = items.length; i < l; i++) {
+      // 遍历数组中的成员，对每个成员调用observe方法进行检测
       observe(items[i])
     }
   }
@@ -107,23 +118,34 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
+// observe(data, true /* asRootData */) 监视data属性
+// vue的响应式数据会有一个__ob__的属性作为标记，里边存放了该属性的观察器（Observer实例），防止重复绑定。
 export function observe (value: any, asRootData: ?boolean): Observer | void {
+  // instanceof 运算符用来测试一个对象在其原型链中是否存在一个构造函数的 prototype 属性
+  // 判断value是否是对象或者是一个虚拟节点
   if (!isObject(value) || value instanceof VNode) {
     return
   }
   let ob: Observer | void
+  // hasOwn() 判断对象是否具有指定属性
+  // 判断value是否有__ob__属性，并且value.__ob__的原型链上是否有Observer实例
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
+    // 如果有Observer实例，则将该实例返给ob
     ob = value.__ob__
   } else if (
+    // 若没有该实例，则创建一个Observer实例并赋值给__ob__这个属性
+    // 这里的判断是为了保证value是纯对象，而不是函数或者Regexp等情况
     shouldObserve &&
     !isServerRendering() &&
     (Array.isArray(value) || isPlainObject(value)) &&
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    // 创建Observer实例
     ob = new Observer(value)
   }
   if (asRootData && ob) {
+    // 如果是根组件则将vmCount加一
     ob.vmCount++
   }
   return ob

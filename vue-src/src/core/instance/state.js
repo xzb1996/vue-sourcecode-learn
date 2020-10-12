@@ -53,7 +53,7 @@ export function proxy(target: Object, sourceKey: string, key: string) {
        desc 属性描述符
        在一个对象上定义一个新属性，或者修改一个对象的现有属性，并返回此对象。
    */
-  // 将key属性名代理到vm实例上
+  // 将key属性名代理到vm实例上，就可以直接用this.key来代替this._data.key
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
