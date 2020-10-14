@@ -27,6 +27,7 @@ export function initMixin (Vue: Class<Component>) {
     }
 
     // a flag to avoid this being observed
+    // 标志位，防止vm实例自身被观察
     vm._isVue = true
     // merge options
     if (options && options._isComponent) {
@@ -49,13 +50,19 @@ export function initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
+    // 初始化生命周期
     initLifecycle(vm)
+    // 初始化事件
     initEvents(vm)
+    // 初始化render
     initRender(vm)
+    // 调用beforeCreate钩子函数，并且触发beforeCreate钩子事件
     callHook(vm, 'beforeCreate')
     initInjections(vm) // resolve injections before data/props
+    // 初始化props、methods、data、computed、watch
     initState(vm)
     initProvide(vm) // resolve provide after data/props
+    // 调用created钩子函数并触发created钩子事件
     callHook(vm, 'created')
 
     /* istanbul ignore if */
@@ -66,6 +73,7 @@ export function initMixin (Vue: Class<Component>) {
     }
 
     if (vm.$options.el) {
+      // 挂载组件
       vm.$mount(vm.$options.el)
     }
   }

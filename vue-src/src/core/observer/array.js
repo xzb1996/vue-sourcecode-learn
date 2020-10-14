@@ -10,9 +10,12 @@
 
 import { def } from '../util/index'
 
+// 获取原生数组的原型
 const arrayProto = Array.prototype
+// 创建一个新的数组对象，修改该对象上的数组的7个方法，防止污染原生数组方法
 export const arrayMethods = Object.create(arrayProto)
 
+// 重写以下数组方法
 const methodsToPatch = [
   'push',
   'pop',
@@ -28,8 +31,10 @@ const methodsToPatch = [
  */
 methodsToPatch.forEach(function (method) {
   // cache original method
+  // 存储数组的原生方法
   const original = arrayProto[method]
   def(arrayMethods, method, function mutator (...args) {
+    // 调用原生的数组方法
     const result = original.apply(this, args)
     const ob = this.__ob__
     let inserted
@@ -42,8 +47,10 @@ methodsToPatch.forEach(function (method) {
         inserted = args.slice(2)
         break
     }
+    // 若有新插入的元素，需要将新元素重新进行observe才能响应式
     if (inserted) ob.observeArray(inserted)
     // notify change
+    // dep通知所有注册的观察者进行响应式处理
     ob.dep.notify()
     return result
   })

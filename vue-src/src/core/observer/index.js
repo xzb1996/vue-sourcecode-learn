@@ -154,6 +154,8 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
 /**
  * Define a reactive property on an Object.
  */
+// 通过Object.defineProperty为数据定义上getter/setter方法
+// 出发setter改变数据的时候就会通过Deps订阅者通知所有的Watcher观察者对象进行试图的更新
 export function defineReactive (
   obj: Object,
   key: string,
@@ -161,6 +163,7 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
+  // 在闭包中定义了一个dep对象
   const dep = new Dep()
 
   const property = Object.getOwnPropertyDescriptor(obj, key)
@@ -169,23 +172,28 @@ export function defineReactive (
   }
 
   // cater for pre-defined getter/setters
+  // 如果之前对象已经预设了getter以及setter函数则将其取出来，新定义的getter/setter中会将其执行，保证不会覆盖之前已经定义的getter和setter
   const getter = property && property.get
   const setter = property && property.set
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
 
+  // 对象的子对象遍历进行observe并返回子节点的Observer对象
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
+      // 判断原对象是否拥有getter，若拥有则执行
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
+        // 进行依赖收集
         dep.depend()
         if (childOb) {
           childOb.dep.depend()
           if (Array.isArray(value)) {
+            // 判断是否是数组，若是则对每个成员进行依赖收集，如果数组的成员还是数组则递归
             dependArray(value)
           }
         }
@@ -193,9 +201,11 @@ export function defineReactive (
       return value
     },
     set: function reactiveSetter (newVal) {
+      // 通过getter方法获取当前值
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
       if (newVal === value || (newVal !== newVal && value !== value)) {
+        // 与新值进行比较，一致则不需要执行下面的操作
         return
       }
       /* eslint-enable no-self-compare */
@@ -209,7 +219,9 @@ export function defineReactive (
       } else {
         val = newVal
       }
+      // 对新值进行observe，保证数据响应式
       childOb = !shallow && observe(newVal)
+      // dep对象通知所有的观察者
       dep.notify()
     }
   })

@@ -10,7 +10,8 @@ vue3都要出了，我连2的源码都还没分析，太不像话了，简单记
 ### 目录
 
 ##### 入口
-建议从`core/instance/index.js`看起
+在`core/instance/index.js`中调用_init函数进行初始化
+可以在`core/instance/init.js`中看到，_init函数进行了一系列的初始化以及$mount组件。
 
 ---
 
