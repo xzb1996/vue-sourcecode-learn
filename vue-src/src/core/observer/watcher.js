@@ -23,6 +23,7 @@ let uid = 0
  * and fires callback when the expression value changes.
  * This is used for both the $watch() api and directives.
  */
+// Watch是一个观察者对象，依赖收集以后Watch对象会被保存在Deps中，数据变动的时候会有Deps通知Watch实例，然后由Watch实例回调进行视图的更新。
 export default class Watcher {
   vm: Component;
   expression: string;
@@ -125,6 +126,7 @@ export default class Watcher {
   /**
    * Add a dependency to this directive.
    */
+  // 添加一个依赖关系到Deps集合中
   addDep (dep: Dep) {
     const id = dep.id
     if (!this.newDepIds.has(id)) {

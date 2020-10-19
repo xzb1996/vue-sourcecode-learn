@@ -10,7 +10,8 @@ let uid = 0
  * A dep is an observable that can have multiple
  * directives subscribing to it.
  */
-// Dep类其实是一个发布者，可以订阅多个观察者，依赖收集之后Deps中会存在一个或多个Watcher对象，在数据变更的时候通知所有的Watcher
+// Dep类其实是一个发布者，可以订阅多个观察者，依赖收集之后Deps中会
+// 存在一个或多个Watcher对象，在数据变更的时候通知所有的Watcher
 export default class Dep {
   static target: ?Watcher;
   id: number;
@@ -32,6 +33,7 @@ export default class Dep {
   }
 
   // 依赖收集
+  // 当存在target对象时添加观察者对象
   depend () {
     if (Dep.target) {
       Dep.target.addDep(this)

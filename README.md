@@ -13,6 +13,7 @@ vue3都要出了，我连2的源码都还没分析，太不像话了，简单记
 在`core/instance/index.js`中调用_init函数进行初始化
 可以在`core/instance/init.js`中看到，_init函数进行了一系列的初始化以及$mount组件。
 
+- [Vue事件机制](./vue-src/src/core/instance/events.js)---Vue.js提供了四个api,分别是`$on`，`$once`，`$off`，`$emit`。
 ---
 
 
