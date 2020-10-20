@@ -44,6 +44,7 @@ export function createElement (
   return _createElement(context, tag, data, children, normalizationType)
 }
 
+// 创建虚拟节点
 export function _createElement (
   context: Component,
   tag?: string | Class<Component> | Function | Object,
@@ -51,22 +52,27 @@ export function _createElement (
   children?: any,
   normalizationType?: number
 ): VNode | Array<VNode> {
+  // 如果传递data并且data上存在__ob__（表明已经绑定了Observe对象）
   if (isDef(data) && isDef((data: any).__ob__)) {
     process.env.NODE_ENV !== 'production' && warn(
       `Avoid using observed data object as vnode data: ${JSON.stringify(data)}\n` +
       'Always create fresh vnode data objects in each render!',
       context
     )
+    // 那么创建一个空节点
     return createEmptyVNode()
   }
+
   // object syntax in v-bind
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
   }
+  // 如果tag不存在也创建一个空节点
   if (!tag) {
     // in case of component :is set to falsy value
     return createEmptyVNode()
   }
+
   // warn against non-primitive key
   if (process.env.NODE_ENV !== 'production' &&
     isDef(data) && isDef(data.key) && !isPrimitive(data.key)
@@ -80,6 +86,7 @@ export function _createElement (
     }
   }
   // support single function children as default scoped slot
+  // ？？？？
   if (Array.isArray(children) &&
     typeof children[0] === 'function'
   ) {
@@ -95,7 +102,9 @@ export function _createElement (
   let vnode, ns
   if (typeof tag === 'string') {
     let Ctor
+    // 获取tag的名字空间
     ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag)
+    // 判断是否有保留的标签
     if (config.isReservedTag(tag)) {
       // platform built-in elements
       if (process.env.NODE_ENV !== 'production' && isDef(data) && isDef(data.nativeOn)) {
@@ -104,12 +113,14 @@ export function _createElement (
           context
         )
       }
+      // 如果有保留的标签则创建一个相应的节点
       vnode = new VNode(
         config.parsePlatformTagName(tag), data, children,
         undefined, undefined, context
       )
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
+      // 如果是一个组件，则创建相应的组件节点
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements
@@ -122,6 +133,7 @@ export function _createElement (
     }
   } else {
     // direct component options / constructor
+    // tag不是字符串的情况，则为组件的构造类
     vnode = createComponent(tag, data, context, children)
   }
   if (Array.isArray(vnode)) {
