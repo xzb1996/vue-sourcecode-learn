@@ -35,14 +35,29 @@ import {
 export const emptyNode = new VNode('', {}, [])
 
 const hooks = ['create', 'activate', 'update', 'remove', 'destroy']
+/**
+ * patch将心就VNode节点进行比较，然后根据两者的比较结果进行最小单位修改视图，
+ * 而不是将整个视图根据新的VNode重绘
+ * 
+ * patch的核心是diff算法，diff算法是通过同层的树节点进行比较，而非对树进行逐层搜索
+ * 遍历的方式，所以时间复杂度只有O(n),是一种相当高的算法。
+ * 
+ * 
+ */
 
+// 判断两个VNode节点是否是同一个节点
 function sameVnode (a, b) {
   return (
+    // key值是否相同
     a.key === b.key && (
       (
+        // 节点标签名是否相同
         a.tag === b.tag &&
+        // 是否是注释节点相同
         a.isComment === b.isComment &&
+        // 当前节点对应的对象（包含具体数据信息，是一个VNodeData类）是否相同
         isDef(a.data) === isDef(b.data) &&
+        // input标签的时候，type类型必须相同
         sameInputType(a, b)
       ) || (
         isTrue(a.isAsyncPlaceholder) &&
@@ -53,6 +68,7 @@ function sameVnode (a, b) {
   )
 }
 
+// 判断标签是input的时候type是否相同
 function sameInputType (a, b) {
   if (a.tag !== 'input') return true
   let i
@@ -502,6 +518,19 @@ export function createPatchFunction (backend) {
     }
   }
 
+  /**
+   * 
+   * patchVNode规则如下；
+   *  1、如果新旧Vnode都是静态的，同时他们的key相同，并且新的VNode是clone或者是标记了
+   *     once的，那么只需要替换elm以及componentInstance即可
+   *  2、新老节点都有children子节点，则对子节点进行diff操作，调动updateChildren，这个
+   *      updateChildren也是diff算法的核心。
+   *  3、如果老节点没有子节点而新节点存在子节点，先清空老节点DOM的文本内容，然后为当前DOM节点
+   *    加入子节点。
+   *  4、当新节点没有子节点而老节点有子节点的时候，则移除该DOM节点所有的子节点。
+   *  5、当新老节点都无子节点的时候，只是文本的替换。
+   * 
+   */
   function patchVnode (
     oldVnode,
     vnode,
@@ -510,6 +539,7 @@ export function createPatchFunction (backend) {
     index,
     removeOnly
   ) {
+    // 两个VNode节点相同则直接返回
     if (oldVnode === vnode) {
       return
     }
@@ -555,21 +585,26 @@ export function createPatchFunction (backend) {
       for (i = 0; i < cbs.update.length; ++i) cbs.update[i](oldVnode, vnode)
       if (isDef(i = data.hook) && isDef(i = i.update)) i(oldVnode, vnode)
     }
+    // 如果VNode节点没有text文本的时候
     if (isUndef(vnode.text)) {
       if (isDef(oldCh) && isDef(ch)) {
+        // 新老节点都有children子节点，对子节点进行diff操作
         if (oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly)
       } else if (isDef(ch)) {
         if (process.env.NODE_ENV !== 'production') {
           checkDuplicateKeys(ch)
         }
+        // 如果老节点没有子节点而新节点存在子节点，先清空elm的文本内容，然后为当前节点加入子节点
         if (isDef(oldVnode.text)) nodeOps.setTextContent(elm, '')
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue)
       } else if (isDef(oldCh)) {
+        // 当新节点没有子节点，而老节点有子节点的时候，则移除所有ele的子节点
         removeVnodes(oldCh, 0, oldCh.length - 1)
       } else if (isDef(oldVnode.text)) {
         nodeOps.setTextContent(elm, '')
       }
     } else if (oldVnode.text !== vnode.text) {
+      // 新老节点text不一样时，直接替换文本
       nodeOps.setTextContent(elm, vnode.text)
     }
     if (isDef(data)) {
