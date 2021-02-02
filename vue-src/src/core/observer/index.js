@@ -181,6 +181,7 @@ export function defineReactive (
 
   // 对象的子对象遍历进行observe并返回子节点的Observer对象
   let childOb = !shallow && observe(val)
+  // Object.defineProperty---直接在一个对象上定义一个新属性，或者修改一个已经存在的属性
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
@@ -232,21 +233,32 @@ export function defineReactive (
  * triggers change notification if the property doesn't
  * already exist.
  */
+// vm.$set分析
 export function set (target: Array<any> | Object, key: any, val: any): any {
+  // 对target进行判断，是否是undefinded或者null或是原始类型值，那么在非生产环境下会打印警告信息
   if (process.env.NODE_ENV !== 'production' &&
     (isUndef(target) || isPrimitive(target))
   ) {
     warn(`Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`)
   }
+
+  // target 为数组的情况
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    // 修改数组的长度，避免索引>数组长度导致splice方法执行有误
     target.length = Math.max(target.length, key)
+    // 利用数组的splice变异方法触发响应式
     target.splice(key, 1, val)
     return val
   }
+
+  // target 为对象的情况
+  // 判断添加的的key不能为Object上的属性，并且key为target中的属性
   if (key in target && !(key in Object.prototype)) {
     target[key] = val
     return val
   }
+
+  // 以上都不成立，给target创建新的属性
   const ob = (target: any).__ob__
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== 'production' && warn(
@@ -255,6 +267,7 @@ export function set (target: Array<any> | Object, key: any, val: any): any {
     )
     return val
   }
+  // target 本身不是响应式数据，直接赋值，进行响应式处理
   if (!ob) {
     target[key] = val
     return val
